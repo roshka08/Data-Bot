@@ -3,7 +3,7 @@ from aiogram.dispatcher.filters.builtin import CommandStart
 from loader import dp, db, bot
 from data.config import ADMINS
 from utils.extra_datas import make_title
-
+from keyboards.default.main_page import main_page
 
 @dp.message_handler(CommandStart())
 async def bot_start(message: types.Message):
@@ -36,3 +36,4 @@ async def bot_start(message: types.Message):
     else:
         await bot.send_message(chat_id=ADMINS[0], text=f"[{make_title(full_name)}](tg://user?id={message.from_user.id}) bazaga oldin qo'shilgan", disable_web_page_preview=True, parse_mode=types.ParseMode.MARKDOWN_V2)
     await message.answer(f"Xush kelibsiz\! {make_title(full_name)}", parse_mode=types.ParseMode.MARKDOWN_V2)
+    await message.answer(f"*Biz sizni:\n*• _IT bo\'yicha_\n• _Talabgir sohalarada_\n• _Ingliz titi bo\'yicha_\n• _Marketing bo\'yicha_\n• _Media yonalishlarida_\n\n*BILIMGA TO\'LDIRAMIZ\!*\n\nDATA endi \- ta\'lim stansiyasi", reply_markup=main_page, parse_mode=types.ParseMode.MARKDOWN_V2)
