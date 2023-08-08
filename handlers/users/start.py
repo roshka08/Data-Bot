@@ -4,9 +4,10 @@ from loader import dp, db, bot
 from data.config import ADMINS
 from utils.extra_datas import make_title
 from keyboards.default.main_page import main_page
+from aiogram.dispatcher import FSMContext
 
-@dp.message_handler(CommandStart())
-async def bot_start(message: types.Message):
+@dp.message_handler(CommandStart(), state="*")
+async def bot_start(message: types.Message, state: FSMContext):
     """
             MARKDOWN V2                     |     HTML
     link:   [Google](https://google.com/)   |     <a href='https://google.com/'>Google</a>
@@ -20,7 +21,7 @@ async def bot_start(message: types.Message):
     Bu belgilarni ishlatish uchun oldidan \ qo'yish esdan chiqmasin. Masalan  \.  ko'rinishi . belgisini ishlatish uchun yozilgan.
     """
 
-
+    await state.finish()
     full_name = message.from_user.full_name
     user = await db.select_user(telegram_id=message.from_user.id)
     if user is None:

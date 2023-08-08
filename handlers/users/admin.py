@@ -20,7 +20,7 @@ from aiogram.dispatcher import FSMContext
 #         await asyncio.sleep(0.05)
 
 
-@dp.message_handler(text="/admin", user_id=ADMINS)
+@dp.message_handler(text="/admin", user_id=ADMINS, state="*")
 async def get_admin_panel(message: types.Message):
     await message.answer('Siz admin paneldasiz!', reply_markup=admin_markup)
 
@@ -77,17 +77,26 @@ async def course_price(message: types.Message, state: FSMContext):
     course_months = data.get('months')
     course_price = message.text
 
-    await message.answer(text=f"Course Params:\nCourse Name: {course_name}\nCourse Desription: {course_description}\nCourse Momths: {course_months} oy\nCourse Price: {course_price} so'm\n\n<b>Kurs to'gri kiritilganmi?</b>", reply_markup=yes_or_no)
+    await state.update_data({'course_price': course_price})
+    await message.answer(text=f"Course Params:\nCourse Name: {course_name}\nCourse Desription: {course_description}\nCourse Momths: {course_months} oy\nCourse Price: {course_price} so'm / oyiga\n\n<b>Kurs to'gri kiritilganmi?</b>", reply_markup=yes_or_no)
 
 callback_data = ['yes', 'no']
 @dp.callback_query_handler(text=callback_data, state="*")
 async def get_course_params(call: types.CallbackQuery, state: FSMContext):
-    print(call.data)
+    data = await state.get_data()
+    course_name = data.get('course_name')
+    course_description = data.get('description')
+    course_months = data.get('months')
+    course_price = data.get("course_price")
+    
     if call.data == "yes":
-        print('yes')
+        await call.message.delete()
+        await db.add_course(course_name=course_name, description=course_description, months=course_months, price=course_price)
+        await call.message.answer('Sizning kursingiz qoshildi!', reply_markup=admin_markup)
     else:
-        print('no')
-
+        await call.message.delete()
+        await call.message.answer("Sizning kursingiz o'chirildi!", reply_markup=admin_markup)
+    await state.finish()
 
 @dp.message_handler(text="/cleandb", user_id=ADMINS)
 async def get_all_users(message: types.Message):

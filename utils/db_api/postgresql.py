@@ -52,12 +52,28 @@ class Database:
         """
         await self.execute(sql, execute=True)
 
+    async def create_table_course(self):
+        sql = """
+        CREATE TABLE IF NOT EXISTS course (
+        id SERIAL PRIMARY KEY,
+        course_name VARCHAR(255) NOT NULL UNIQUE,
+        description varchar(355) NOT NULL,
+        months VARCHAR(20) NULL,
+        price VARCHAR(100) NULL 
+        );
+        """
+        await self.execute(sql, execute=True)
+
     @staticmethod
     def format_args(sql, parameters: dict):
         sql += " AND ".join(
             [f"{item} = ${num}" for num, item in enumerate(parameters.keys(), start=1)]
         )
         return sql, tuple(parameters.values())
+    
+    async def add_course(self, course_name, description, months, price):
+        sql = "INSERT INTO course (course_name, description, months, price) VALUES($1, $2, $3, $4) returning *"
+        return await self.execute(sql, course_name, description, months, price, fetchrow=True)
 
     async def add_user(self, full_name, username, telegram_id):
         sql = "INSERT INTO users (full_name, username, telegram_id) VALUES($1, $2, $3) returning *"
@@ -67,8 +83,17 @@ class Database:
         sql = "SELECT * FROM Users"
         return await self.execute(sql, fetch=True)
 
+    async def select_all_course(self):
+        sql = "SELECT * FROM course"
+        return await self.execute(sql, fetch=True)
+
     async def select_user(self, **kwargs):
         sql = "SELECT * FROM Users WHERE "
+        sql, parameters = self.format_args(sql, parameters=kwargs)
+        return await self.execute(sql, *parameters, fetchrow=True)
+    
+    async def select_course(self, **kwargs):
+        sql = "SELECT * FROM course WHERE "
         sql, parameters = self.format_args(sql, parameters=kwargs)
         return await self.execute(sql, *parameters, fetchrow=True)
 
@@ -85,3 +110,6 @@ class Database:
 
     async def drop_users(self):
         await self.execute("DROP TABLE Users", execute=True)
+
+    async def drop_course(self):
+        await self.execute("DROP TABLE course", execute=True)
