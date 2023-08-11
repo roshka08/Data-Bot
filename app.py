@@ -11,8 +11,13 @@ async def on_startup(dispatcher):
     await db.create()
     # await db.drop_users()
     # await db.drop_course()
+    # await db.drop_enroll_users()
+    # await db.drop_advice_users()
     # await db.create_table_users()
     # await db.create_table_course()
+    # await db.create_table_enroll_user()
+    # await db.create_table_advice_users()
+
 
     # Birlamchi komandalar (/start va /help)
     await set_default_commands(dispatcher)

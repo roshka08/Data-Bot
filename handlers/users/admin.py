@@ -3,12 +3,14 @@ from aiogram import types
 from aiogram.types import ReplyKeyboardRemove
 from data.config import ADMINS
 from loader import dp, db, bot
+from utils.extra_datas import make_title
 import pandas as pd
 from keyboards.default.admin_panel import admin_markup
 from keyboards.default.number_markup import number_markup
 from keyboards.inline.yes_or_no import yes_or_no
 from states.admin_panel_state import AdminPanelState
 from aiogram.dispatcher import FSMContext
+from keyboards.inline.delete_advice import delete_advice
 
 
 # @dp.message_handler(text="/reklama", user_id=ADMINS)
@@ -98,7 +100,55 @@ async def get_course_params(call: types.CallbackQuery, state: FSMContext):
         await call.message.answer("Sizning kursingiz o'chirildi!", reply_markup=admin_markup)
     await state.finish()
 
-@dp.message_handler(text="/cleandb", user_id=ADMINS)
+@dp.message_handler(text="📜 Arizalar", user_id=ADMINS, state="*")
+async def get_all_enroll_users(message: types.Message, state: FSMContext):
+    all_enroll_users = await db.select_all_enroll_users()
+
+    course_name = []
+    user_name = []
+    user_phone = []
+
+    for user in all_enroll_users:
+        course_name.append(user[-1])
+        user_name.append(user[1])
+        user_phone.append(user[2])
+    data = {
+        "Name": user_name,
+        "Phone": user_phone,
+        "Course": course_name
+    }
+    pd.options.display.max_rows = 10000
+    df = pd.DataFrame(data)
+
+    if len(df) > 150:
+        for x in range(0, len(df), 50):
+            await bot.send_message(message.chat.id, df[x:x + 50])
+            await state.finish()
+    else:
+        await bot.send_message(message.chat.id, df)
+        await state.finish()
+
+@dp.message_handler(text="✍️ Maslahatlar", state="*", user_id=ADMINS)
+async def get_all_advices(message: types.Message):
+    advices = await db.select_all_advices()
+    for user in advices:
+        id = user.get('id')
+        user_name = user.get('user_name')
+        user_id = user.get('user_id')
+        user_phone = user.get('user_phone')
+        user_advice = user.get('user_advice')
+
+        await bot.send_message(message.chat.id, text=f"{id}\. [{make_title(user_name)}](tg://user?id={user_id})\nPhone: \{user_phone}\nMaslahat: {user_advice}", parse_mode=types.ParseMode.MARKDOWN_V2, reply_markup=delete_advice)
+
+@dp.callback_query_handler(text="delete")
+async def advice_delete(call: types.CallbackQuery):
+    advices = await db.select_all_advices()
+
+    print(call.message)
+
+    # await db.delete_advice(id=id)
+
+@dp.message_handler(text="/cleandb", user_id=ADMINS[0])
 async def get_all_users(message: types.Message):
     await db.delete_users()
     await message.answer("Baza tozalandi!")
