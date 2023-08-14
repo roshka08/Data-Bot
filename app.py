@@ -17,6 +17,7 @@ async def on_startup(dispatcher):
     # await db.create_table_course()
     # await db.create_table_enroll_user()
     # await db.create_table_advice_users()
+    # await db.create_table_blog()
 
 
     # Birlamchi komandalar (/start va /help)

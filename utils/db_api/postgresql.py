@@ -87,6 +87,15 @@ class Database:
         """
         await self.execute(sql, execute=True)
 
+    async def create_table_blog(self):
+        sql = """
+        CREATE TABLE IF NOT EXISTS blog (
+        id SERIAL PRIMARY KEY,
+        blog_title VARCHAR(255) NOT NULL UNIQUE, 
+        blog_date DATE NOT NULL
+        );
+        """
+        await self.execute(sql, execute=True)
 
     @staticmethod
     def format_args(sql, parameters: dict):

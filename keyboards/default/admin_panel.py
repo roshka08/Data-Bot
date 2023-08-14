@@ -6,7 +6,7 @@ delete_course = KeyboardButton(text="🗑 Kurs o'chirish")
 
 courses_markup = ReplyKeyboardMarkup(keyboard=[[add_course], [delete_course]], resize_keyboard=True, row_width=2)
 
-add_blog = KeyboardButton(text="🖼 Blog qo'shish")
+add_blog = KeyboardButton(text="🖼 Bloglar")
 courses = KeyboardButton(text="📕 Kurslar")
 see_all_user = KeyboardButton(text="👁 Userlarni qo'rish")
 see_all_enroll_users = KeyboardButton(text="📜 Arizalar")
