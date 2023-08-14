@@ -13,6 +13,7 @@ async def on_startup(dispatcher):
     # await db.drop_course()
     # await db.drop_enroll_users()
     # await db.drop_advice_users()
+    # await db.drop_blog()
     # await db.create_table_users()
     # await db.create_table_course()
     # await db.create_table_enroll_user()

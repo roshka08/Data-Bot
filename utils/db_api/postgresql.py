@@ -91,8 +91,9 @@ class Database:
         sql = """
         CREATE TABLE IF NOT EXISTS blog (
         id SERIAL PRIMARY KEY,
-        blog_title VARCHAR(255) NOT NULL UNIQUE, 
-        blog_date DATE NOT NULL
+        blog_title VARCHAR(255) NOT NULL UNIQUE,
+        blog_description VARCHAR(500) NOT NULL, 
+        blog_date VARCHAR(100) NOT NULL
         );
         """
         await self.execute(sql, execute=True)
@@ -119,6 +120,10 @@ class Database:
     async def add_user(self, full_name, username, telegram_id):
         sql = "INSERT INTO users (full_name, username, telegram_id) VALUES($1, $2, $3) returning *"
         return await self.execute(sql, full_name, username, telegram_id, fetchrow=True)
+    
+    async def add_blog(self, blog_title, blog_description, blog_date):
+        sql = "INSERT INTO blog (blog_title, blog_description, blog_date) VALUES($1, $2, $3) returning *"
+        return await self.execute(sql, blog_title, blog_description, blog_date, fetchrow=True)
 
     async def select_all_users(self):
         sql = "SELECT * FROM Users"
@@ -126,6 +131,10 @@ class Database:
 
     async def select_all_course(self):
         sql = "SELECT * FROM course"
+        return await self.execute(sql, fetch=True)
+    
+    async def select_all_blogs(self):
+        sql = "SELECT * FROM blog"
         return await self.execute(sql, fetch=True)
     
     async def select_all_enroll_users(self):
@@ -163,11 +172,17 @@ class Database:
     async def delete_course(self, course_name):
         await self.execute("DELETE FROM course WHERE course_name=$1", course_name, execute=True)
 
+    async def delete_blog(self, blog_title):
+        await self.execute("DELETE FROM blog WHERE blog_title=$1", blog_title, execute=True)
+
     async def drop_users(self):
         await self.execute("DROP TABLE Users", execute=True)
 
     async def drop_course(self):
         await self.execute("DROP TABLE course", execute=True)
+
+    async def drop_blog(self):
+        await self.execute("DROP TABLE blog", execute=True)
 
     async def drop_enroll_users(self):
         await self.execute("DROP TABLE enroll_user", execute=True)
