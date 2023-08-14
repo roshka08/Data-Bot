@@ -14,8 +14,9 @@ async def get_courses(message: types.Message, state: FSMContext):
         txt = info.get('course_name')
         courses_markup.insert(types.InlineKeyboardButton(text=txt, callback_data=txt))
 
+    await state.update_data({"courses": courses_markup})
     await message.answer('Barcha kurslar:', reply_markup=courses_markup)
-    await KursState.next()
+    await KursState.course_info.set()
 
 @dp.callback_query_handler(state=KursState.course_info)
 async def get_course_info(call: types.CallbackQuery, state: FSMContext):
@@ -24,19 +25,31 @@ async def get_course_info(call: types.CallbackQuery, state: FSMContext):
     course_info = await db.select_course(course_name=course_name)
 
     await call.message.delete()
-    await call.message.answer(f"Kurs: {course_info.get('course_name')} - {course_info.get('months')} oy davom etadi\n\n<i>{course_info.get('description')}</i>\n\nKurs oyiga - {course_info.get('price')}", reply_markup=course_enroll)
-    await KursState.next()
+    await call.message.answer(f"Kurs: {course_info.get('course_name')} - {course_info.get('months')} oy davom etadi\n\n<i>{course_info.get('description')}</i>\n\nKurs oyiga - {course_info.get('price')} so'm", reply_markup=course_enroll)
+    await KursState.course_enroll.set()
 
 @dp.message_handler(text="📩 Ariza qoldirish", state=KursState.course_enroll)
-async def get_application(message: types.Message, state: FSMContext):
-    await message.answer('👤 Ismingizni kiriting: ', reply_markup=types.ReplyKeyboardRemove())
-    await KursState.next()
+@dp.message_handler(text="🔙 Orqaga qaytish", state=KursState.course_enroll)
+@dp.message_handler(text="🏘 Bosh menyu", state=KursState.course_enroll)
+async def go_back(message: types.Message, state: FSMContext):    
+    if message.text == "🔙 Orqaga qaytish":
+        data = await state.get_data()
+        courses = data.get("courses")
+        await message.answer(text="Siz ortga qaytdingiz!", reply_markup=main_page)
+        await message.answer('Barcha kurslar:', reply_markup=courses)
+        await KursState.course_info.set()
+    elif message.text == "🏘 Bosh menyu":
+        await message.answer(text="Siz bosh menyudasiz!", reply_markup=main_page)
+        await state.finish()
+    else: 
+        await message.answer('👤 Ismingizni kiriting: ', reply_markup=types.ReplyKeyboardRemove())
+        await KursState.enroll_user_name.set()
 
 @dp.message_handler(state=KursState.enroll_user_name)
 async def get_user_name(message: types.Message, state: FSMContext):
     await state.update_data({'user_name': message.text})
     await message.answer('📞 Telefon raqamingizni qiriting: ', reply_markup=enroll_phone)
-    await KursState.next()
+    await KursState.enroll_phone.set()
 
 @dp.message_handler(state=KursState.enroll_phone, content_types=['contact'])
 async def get_user_phone(message: types.Message, state: FSMContext):

@@ -11,15 +11,25 @@ async def get_about_us(message: types.Message):
     await AboutUsState.next()
 
 @dp.message_handler(text="✍️ Maslahat olish", state=AboutUsState.start)
+@dp.message_handler(text="🔙 Orqaga qaytish", state=AboutUsState.start)
 async def get_start_advice(message: types.Message, state: FSMContext):
-    await message.answer(text="Telefon raqamni yuboring: ", reply_markup=advice_phone)
-    await AboutUsState.next()
+    if message.text == "🔙 Orqaga qaytish":
+        await message.answer(text="Siz bosh menyudasiz!", reply_markup=main_page)
+        await state.finish()
+    else:    
+        await message.answer(text="Telefon raqamni yuboring: ", reply_markup=advice_phone)
+        await AboutUsState.next()
 
 @dp.message_handler(state=AboutUsState.user_phone, content_types=["contact"])
+@dp.message_handler(text="🏘 Bosh menyu", state=AboutUsState.user_phone)
 async def get_user_phone(message: types.Message, state: FSMContext):
-    await state.update_data({"user_phone": message.contact.phone_number})
-    await message.answer("Nima haqida maslahat olmoqchisiz / bermoqchisiz: ", reply_markup=types.ReplyKeyboardRemove())
-    await AboutUsState.next()
+    if message.text == "🏘 Bosh menyu":
+        await message.answer(text="Siz bosh menyudasiz!", reply_markup=main_page)
+        await state.finish()
+    else:
+        await state.update_data({"user_phone": message.contact.phone_number})
+        await message.answer("Nima haqida maslahat olmoqchisiz / bermoqchisiz: ", reply_markup=types.ReplyKeyboardRemove())
+        await AboutUsState.next()
 
 @dp.message_handler(state=AboutUsState.advice)
 async def get_user_advice(message: types.Message, state: FSMContext):

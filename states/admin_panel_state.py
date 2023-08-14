@@ -5,3 +5,7 @@ class AdminPanelState(StatesGroup):
     description = State()
     months = State()
     price = State()
+    end = State()
+
+class AdminPanelDeleteCourseState(StatesGroup):
+    delete_course = State()

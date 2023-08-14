@@ -148,8 +148,11 @@ class Database:
     async def delete_users(self):
         await self.execute("DELETE FROM Users WHERE TRUE", execute=True)
 
-    async def delete_advice(self, id):
-        await self.execute("DELETE FROM Users WHERE id=$1", id, execute=True)
+    async def delete_advice(self, user_advice):
+        await self.execute("DELETE FROM advice_users WHERE user_advice=$1", user_advice, execute=True)
+
+    async def delete_course(self, course_name):
+        await self.execute("DELETE FROM course WHERE course_name=$1", course_name, execute=True)
 
     async def drop_users(self):
         await self.execute("DROP TABLE Users", execute=True)

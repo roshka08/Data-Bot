@@ -5,10 +5,10 @@ from data.config import ADMINS
 from loader import dp, db, bot
 from utils.extra_datas import make_title
 import pandas as pd
-from keyboards.default.admin_panel import admin_markup
+from keyboards.default.admin_panel import admin_markup, courses_markup
 from keyboards.default.number_markup import number_markup
 from keyboards.inline.yes_or_no import yes_or_no
-from states.admin_panel_state import AdminPanelState
+from states.admin_panel_state import AdminPanelState, AdminPanelDeleteCourseState
 from aiogram.dispatcher import FSMContext
 from keyboards.inline.delete_advice import delete_advice
 
@@ -48,10 +48,33 @@ async def get_all_users(message: types.Message, state: FSMContext):
         await bot.send_message(message.chat.id, df)
         await state.finish()
 
-@dp.message_handler(text="🆕 Kurs qo'shish", user_id=ADMINS, state="*")
-async def create_course(message: types.Message, state: FSMContext):
-    await message.answer(text="Kursni nomini kiriting:", reply_markup=ReplyKeyboardRemove())
+@dp.message_handler(text="📕 Kurslar", state="*")
+async def get_course_add_or_delete(message: types.Message, state: FSMContext):
+    await message.answer(text="Tanlang: ", reply_markup=courses_markup)
     await AdminPanelState.next()
+
+@dp.message_handler(text="🆕 Kurs qo'shish", user_id=ADMINS, state="*")
+@dp.message_handler(text="🗑 Kurs o'chirish", user_id=ADMINS, state="*")
+async def create_course(message: types.Message, state: FSMContext):
+    if message.text == "🗑 Kurs o'chirish":
+        courses = await db.select_all_course()
+        courses_markup = types.InlineKeyboardMarkup(row_width=3)
+        for info in courses:
+            txt = info.get('course_name')
+            courses_markup.insert(types.InlineKeyboardButton(text=txt, callback_data=txt))
+        await message.answer("Qaysi kursni o'chirmoqchisiz:", reply_markup=courses_markup)
+        await AdminPanelDeleteCourseState.delete_course.set()
+    else:
+        await message.answer(text="Kursni nomini kiriting:", reply_markup=ReplyKeyboardRemove())
+        await AdminPanelState.course_name.set()
+
+@dp.callback_query_handler(state=AdminPanelDeleteCourseState.delete_course, user_id=ADMINS)
+async def delete_course(call: types.CallbackQuery, state: FSMContext):
+    course = call.data
+    await db.delete_course(course_name=course)
+    await call.message.delete()
+    await call.message.answer(text="Kurs o'chdi!", reply_markup=admin_markup)
+    await state.finish()
 
 @dp.message_handler(user_id=ADMINS, state=AdminPanelState.course_name)
 async def course_name(message: types.Message, state: FSMContext):
@@ -81,9 +104,10 @@ async def course_price(message: types.Message, state: FSMContext):
 
     await state.update_data({'course_price': course_price})
     await message.answer(text=f"Course Params:\nCourse Name: {course_name}\nCourse Desription: {course_description}\nCourse Momths: {course_months} oy\nCourse Price: {course_price} so'm / oyiga\n\n<b>Kurs to'gri kiritilganmi?</b>", reply_markup=yes_or_no)
+    await AdminPanelState.next()
 
 callback_data = ['yes', 'no']
-@dp.callback_query_handler(text=callback_data, state="*")
+@dp.callback_query_handler(text=callback_data, state=AdminPanelState.end)
 async def get_course_params(call: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
     course_name = data.get('course_name')
@@ -142,11 +166,10 @@ async def get_all_advices(message: types.Message):
 
 @dp.callback_query_handler(text="delete")
 async def advice_delete(call: types.CallbackQuery):
-    advices = await db.select_all_advices()
-
-    print(call.message)
-
-    # await db.delete_advice(id=id)
+    await call.message.delete()
+    user_advice = call.message.text[41:]
+    await db.delete_advice(user_advice=user_advice)
+    await call.message.answer(text="O'chirirldi!", reply_markup=admin_markup)
 
 @dp.message_handler(text="/cleandb", user_id=ADMINS[0])
 async def get_all_users(message: types.Message):
