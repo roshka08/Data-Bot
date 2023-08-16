@@ -30,6 +30,8 @@ async def to_admin_page(message: types.Message, state: FSMContext):
 async def get_admin_panel(message: types.Message):
     await message.answer('Siz admin paneldasiz!', reply_markup=admin_markup)
 
+user_name = []
+
 @dp.message_handler(text="👁 Userlarni qo'rish", user_id=ADMINS, state="*")
 async def get_all_users(message: types.Message, state: FSMContext):
     users = await db.select_all_users()
@@ -38,6 +40,8 @@ async def get_all_users(message: types.Message, state: FSMContext):
     for user in users:
         id.append(user[-1])
         name.append(user[1])
+        user_name.append(user[1])
+
     data = {
         "Telegram ID": id,
         "Name": name
@@ -233,6 +237,25 @@ async def get_safe_or_delete(call: types.CallbackQuery, state: FSMContext):
         await db.add_blog(blog_title=blog_title, blog_description=blog_description, blog_date=blog_date)
     else:
         await call.message.answer(text="Siznig blogingiz o'chirildi!", reply_markup=admin_markup)
+        await state.finish()
+
+@dp.message_handler(text="👤 Adminlar", state="*", user_id=ADMINS)
+async def get_all_admins(message: types.Message, state: FSMContext):
+    admin_id = []
+    for id in ADMINS:    
+        admin_id.append(f"[{make_title('ADMIN')}](tg://user?id={id})")
+    data = {
+        "ADMINS": admin_id
+    }
+    
+    pd.options.display.max_rows = 10000
+    df = pd.DataFrame(data)
+    if len(df) > 150:
+        for x in range(1, len(df), 50):
+            await bot.send_message(message.chat.id, df[x:x + 50], parse_mode=types.ParseMode.MARKDOWN_V2)
+            await state.finish()
+    else:
+        await bot.send_message(message.chat.id, df, parse_mode=types.ParseMode.MARKDOWN_V2)
         await state.finish()
 
 @dp.message_handler(text="/cleandb", user_id=ADMINS[0])

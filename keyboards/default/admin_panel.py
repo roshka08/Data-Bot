@@ -17,11 +17,13 @@ courses = KeyboardButton(text="📕 Kurslar")
 see_all_user = KeyboardButton(text="👁 Userlarni qo'rish")
 see_all_enroll_users = KeyboardButton(text="📜 Arizalar")
 see_all_advices = KeyboardButton(text="✍️ Maslahatlar")
+see_all_admins = KeyboardButton(text="👤 Adminlar")
 
 admin_markup = ReplyKeyboardMarkup(resize_keyboard=True)
 admin_markup.add(see_all_user)
 admin_markup.add(courses, blog)
 admin_markup.add(see_all_enroll_users, see_all_advices)
+admin_markup.add(see_all_admins)
 
 add_blog = KeyboardButton(text="🆕 Blog qo'shish")
 delete_blog = KeyboardButton(text="🗑 Blog o'chirish")
